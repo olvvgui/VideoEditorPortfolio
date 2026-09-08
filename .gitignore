@@ -20,5 +20,5 @@ Thumbs.db
 *.bak
 *.backup
 .idea/
-dev_README.md
-SECURITY_LOG.md
+dist-demo/
+dev_docs/

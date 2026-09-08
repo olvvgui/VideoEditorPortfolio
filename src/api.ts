@@ -26,6 +26,8 @@ export async function api<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
+  if (import.meta.env.MODE === "demo")
+    throw new Error("API indisponível na demonstração estática.");
   const response = await fetch(`/api${path}`, {
     ...options,
     credentials: "same-origin",

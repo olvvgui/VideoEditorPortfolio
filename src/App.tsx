@@ -3,6 +3,8 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  lazy,
+  Suspense,
   type CSSProperties,
 } from "react";
 import {
@@ -22,7 +24,17 @@ import { api, type Category, type Video } from "./api";
 import { demoVideos } from "../shared/demo";
 import { categories as defaultCategories } from "../shared/youtube";
 import { VideoModal } from "./components/VideoModal";
-import { Admin } from "./components/Admin";
+import { isDemo } from "./config/mode";
+import { demoCatalog } from "../shared/demo-catalog";
+import { extractYouTubeId } from "../shared/youtube";
+const Admin =
+  import.meta.env.MODE === "demo"
+    ? null
+    : lazy(() =>
+        import("./components/Admin").then((module) => ({
+          default: module.Admin,
+        })),
+      );
 import { ContactDock } from "./components/ContactDock";
 export function Logo({
   className = "",
@@ -35,7 +47,7 @@ export function Logo({
     <a
       className={`logo ${className}`}
       style={style}
-      href="/"
+      href={import.meta.env.BASE_URL}
       aria-label="FRAME, início"
     >
       FRAME<span>®</span>
@@ -93,6 +105,19 @@ function App() {
     [menu, setMenu] = useState(false);
   const [service, setService] = useState<number | null>(null);
   const load = () => {
+    if (isDemo) {
+      setVideos(
+        demoCatalog.map((video) => ({
+          ...video,
+          videoId: extractYouTubeId(video.youtubeUrl)!,
+        })),
+      );
+      setCategoryOptions([
+        ...new Set(demoCatalog.map((video) => video.category)),
+      ]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError("");
     Promise.all([api<Video[]>("/videos"), api<Category[]>("/categories")])
@@ -108,7 +133,12 @@ function App() {
   useEffect(() => {
     load();
   }, []);
-  if (window.location.pathname.startsWith("/admin")) return <Admin />;
+  if (!isDemo && Admin && window.location.pathname.startsWith("/admin"))
+    return (
+      <Suspense fallback={<p>Carregando painel…</p>}>
+        <Admin />
+      </Suspense>
+    );
   const filtered = videos.filter(
     (v) =>
       (filter === "Todos" || v.category === filter) &&
@@ -391,6 +421,9 @@ function App() {
                           if (!img.dataset.fallback) {
                             img.dataset.fallback = "true";
                             img.src = `https://i.ytimg.com/vi/${v.videoId}/hqdefault.jpg`;
+                          } else if (img.dataset.fallback !== "local") {
+                            img.dataset.fallback = "local";
+                            img.src = `${import.meta.env.BASE_URL}video-placeholder.svg`;
                           }
                         }}
                         alt={v.title}
@@ -538,9 +571,12 @@ function App() {
             Feito no Brasil. Criado para o mundo.{" "}
             <span className="brazil-dot" />
           </span>
-          <a href="/admin">
-            Área do editor <ArrowRight size={12} />
-          </a>
+          {!isDemo && (
+            <a href="/admin">
+              Área do editor <ArrowRight size={12} />
+            </a>
+          )}
+          {isDemo && <span>Demonstração · Vídeos de terceiros</span>}
         </div>
       </footer>
       <ContactDock />

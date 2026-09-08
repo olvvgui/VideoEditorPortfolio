@@ -1,0 +1,48 @@
+name: Publicar demonstração no GitHub Pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/configure-pages@v5
+        id: pages
+      - run: npm ci
+      - run: npm run build:demo
+        env:
+          PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}/
+          VITE_CONTACT_EMAIL: ${{ vars.VITE_CONTACT_EMAIL }}
+          VITE_EMAIL_LINK: ${{ vars.VITE_EMAIL_LINK }}
+          VITE_WHATSAPP: ${{ vars.VITE_WHATSAPP }}
+          VITE_WHATSAPP_LINK: ${{ vars.VITE_WHATSAPP_LINK }}
+          VITE_WHATSAPP_MESSAGE: ${{ vars.VITE_WHATSAPP_MESSAGE }}
+          VITE_INSTAGRAM: ${{ vars.VITE_INSTAGRAM }}
+          VITE_LINKEDIN: ${{ vars.VITE_LINKEDIN }}
+          VITE_YOUTUBE: ${{ vars.VITE_YOUTUBE }}
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist-demo
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/deploy-pages@v4
+        id: deployment

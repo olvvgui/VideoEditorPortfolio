@@ -2394,6 +2394,14 @@ form textarea,
   background: #ffffff09;
   border-color: #ffffff22;
 }
+form select {
+  color-scheme: dark;
+  background-color: #15171d;
+}
+form select option {
+  color: #f5f5f7;
+  background: #15171d;
+}
 .contact-dock {
   border-color: #ffffff2b;
   background: linear-gradient(110deg, #121318ed, #1d1015ed 55%, #0d1324ed);
