@@ -1,0 +1,63 @@
+{
+  "name": "frame-portfolio",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -k -n web,api \"vite --host 0.0.0.0\" \"npm run dev:api\"",
+    "dev:web": "vite --host 0.0.0.0",
+    "dev:api": "tsc -p server/tsconfig.json && node server/dist/server/src/main.js",
+    "build": "tsc --noEmit -p tsconfig.json && vite build && tsc -p server/tsconfig.json",
+    "start": "NODE_ENV=production node server/dist/server/src/main.js",
+    "db:generate": "prisma generate --schema server/prisma/schema.prisma",
+    "db:migrate": "umask 077 && prisma migrate deploy --schema server/prisma/schema.prisma",
+    "db:seed": "tsx server/prisma/seed.ts",
+    "setup": "npm run db:generate && npm run db:migrate && npm run db:seed",
+    "test": "tsx --test tests/*.test.ts",
+    "postinstall": "npm run db:generate",
+    "test:e2e": "playwright test",
+    "test:security": "npm run build && node scripts/security-check.mjs",
+    "format": "prettier --write src shared server/src server/prisma/seed.ts tests *.json *.ts index.html README.md"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.1.0",
+    "@nestjs/core": "^11.1.0",
+    "@nestjs/jwt": "^11.0.0",
+    "@nestjs/platform-express": "^11.1.0",
+    "@nestjs/throttler": "^6.4.0",
+    "@prisma/client": "6.19.0",
+    "bcrypt": "^6.0.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.2",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "lucide-react": "^0.468.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@tailwindcss/vite": "^4.1.0",
+    "@types/bcrypt": "^5.0.2",
+    "@types/cookie-parser": "^1.4.8",
+    "@types/express": "^5.0.1",
+    "@types/node": "^22.15.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.4.1",
+    "concurrently": "^9.1.2",
+    "prettier": "^3.9.6",
+    "prisma": "6.19.0",
+    "tailwindcss": "^4.1.0",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5"
+  },
+  "overrides": {
+    "effect": "^3.20.0",
+    "deepmerge-ts": "^8.0.0"
+  }
+}
