@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useCallback,
   useLayoutEffect,
   useRef,
   useState,
@@ -104,7 +105,8 @@ function App() {
     [selected, setSelected] = useState<Video | null>(null),
     [menu, setMenu] = useState(false);
   const [service, setService] = useState<number | null>(null);
-  const load = () => {
+  const loadingRequest = useRef(false);
+  const load = useCallback((silent = false) => {
     if (isDemo) {
       setVideos(
         demoCatalog.map((video) => ({
@@ -118,21 +120,52 @@ function App() {
       setLoading(false);
       return;
     }
-    setLoading(true);
-    setError("");
+    if (loadingRequest.current) return;
+    loadingRequest.current = true;
+    if (!silent) setLoading(true);
     Promise.all([api<Video[]>("/videos"), api<Category[]>("/categories")])
       .then(([loadedVideos, loadedCategories]) => {
         setVideos(loadedVideos);
         setCategoryOptions(loadedCategories.map(({ name }) => name));
+        setFilter((current) =>
+          current === "Todos" ||
+          loadedCategories.some(({ name }) => name === current)
+            ? current
+            : "Todos",
+        );
+        setError("");
       })
-      .catch(() =>
-        setError("Não foi possível carregar os projetos. Tente novamente."),
-      )
-      .finally(() => setLoading(false));
-  };
-  useEffect(() => {
-    load();
+      .catch(() => {
+        if (!silent)
+          setError("Não foi possível carregar os projetos. Tente novamente.");
+      })
+      .finally(() => {
+        loadingRequest.current = false;
+        setLoading(false);
+      });
   }, []);
+  useEffect(() => {
+    if (!isDemo && window.location.pathname.startsWith("/admin")) return;
+    load();
+    if (isDemo) return;
+    const refresh = () => {
+      if (document.visibilityState === "visible") load(true);
+    };
+    const channel =
+      typeof BroadcastChannel === "undefined"
+        ? null
+        : new BroadcastChannel("frame-catalog");
+    if (channel) channel.onmessage = refresh;
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    const interval = window.setInterval(refresh, 30000);
+    return () => {
+      channel?.close();
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+      window.clearInterval(interval);
+    };
+  }, [load]);
   if (!isDemo && Admin && window.location.pathname.startsWith("/admin"))
     return (
       <Suspense fallback={<p>Carregando painel…</p>}>
@@ -371,7 +404,7 @@ function App() {
           ) : error ? (
             <div className="empty-state" role="alert">
               <p>{error}</p>
-              <button className="button button-green" onClick={load}>
+              <button className="button button-green" onClick={() => load()}>
                 Tentar novamente
               </button>
             </div>

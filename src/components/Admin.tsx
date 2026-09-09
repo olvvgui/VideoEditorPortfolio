@@ -229,7 +229,9 @@ export function Admin() {
       if (form.category === category.name)
         setForm((current) => ({
           ...current,
-          category: categoryOptions[0]?.name || "Comercial",
+          category:
+            categoryOptions.find(({ id }) => id !== category.id)?.name ||
+            "Comercial",
         }));
       setNotice(`Categoria “${category.name}” removida.`);
     } catch (e) {

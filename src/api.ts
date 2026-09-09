@@ -47,5 +47,14 @@ export async function api<T>(
       response.status,
     );
   if (data === null) throw new Error("Não foi possível conectar ao servidor.");
+  if (
+    !["GET", "HEAD"].includes((options.method || "GET").toUpperCase()) &&
+    /^\/(videos|categories)(\/|$)/.test(path) &&
+    typeof BroadcastChannel !== "undefined"
+  ) {
+    const channel = new BroadcastChannel("frame-catalog");
+    channel.postMessage("updated");
+    channel.close();
+  }
   return data;
 }
