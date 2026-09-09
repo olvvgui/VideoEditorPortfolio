@@ -140,12 +140,14 @@ test(
         ).status,
         200,
       );
-      const list = (await (await request("/videos")).json()) as {
-        id: string;
-        title: string;
-        videoId: string;
-        isShowreel: boolean;
-      }[];
+      const { items: list } = (await (await request("/videos")).json()) as {
+        items: {
+          id: string;
+          title: string;
+          videoId: string;
+          isShowreel: boolean;
+        }[];
+      };
       assert.equal(list.find((x) => x.id === v.id)?.title, "Atualizado");
       assert.equal(list.find((x) => x.id === v.id)?.videoId, "aqz-KE-bpKQ");
       assert.equal(list.find((x) => x.id === v.id)?.isShowreel, true);

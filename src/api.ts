@@ -8,6 +8,14 @@ export type Video = {
   isShowreel: boolean;
   createdAt?: string;
 };
+export type VideoListItem = Omit<Video, "youtubeUrl">;
+export type VideoPage = {
+  items: VideoListItem[];
+  total: number;
+  page: number;
+  limit: number;
+  hasNext: boolean;
+};
 export type Category = {
   id: string;
   name: string;

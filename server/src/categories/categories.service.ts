@@ -17,39 +17,45 @@ export class CategoriesService {
   }
 
   async create(name: string) {
-    const categories = await this.prisma.category.findMany({
-      select: { name: true },
-    });
-    if (
-      categories.some(
-        (category) =>
-          category.name.localeCompare(name, "pt-BR", {
-            sensitivity: "base",
-          }) === 0,
+    return this.prisma.write("category.create", async (tx) => {
+      const categories = await tx.category.findMany({
+        select: { name: true },
+      });
+      if (
+        categories.some(
+          (category) =>
+            category.name.localeCompare(name, "pt-BR", {
+              sensitivity: "base",
+            }) === 0,
+        )
       )
-    )
-      throw new ConflictException("Essa categoria já existe.");
+        throw new ConflictException("Essa categoria já existe.");
 
-    return this.prisma.category.create({ data: { name } });
+      if (categories.length >= 100)
+        throw new BadRequestException("Limite de 100 categorias atingido.");
+      return tx.category.create({ data: { name } });
+    });
   }
 
   async delete(id: string) {
-    const category = await this.prisma.category.findUnique({ where: { id } });
-    if (!category) throw new NotFoundException("Categoria não encontrada.");
-    if (category.isDefault)
-      throw new BadRequestException(
-        "As categorias padrão não podem ser excluídas.",
-      );
+    return this.prisma.write("category.delete", async (tx) => {
+      const category = await tx.category.findUnique({ where: { id } });
+      if (!category) throw new NotFoundException("Categoria não encontrada.");
+      if (category.isDefault)
+        throw new BadRequestException(
+          "As categorias padrão não podem ser excluídas.",
+        );
 
-    const videos = await this.prisma.video.count({
-      where: { category: category.name },
+      const videos = await tx.video.count({
+        where: { category: category.name },
+      });
+      if (videos)
+        throw new BadRequestException(
+          "Mova ou exclua os vídeos desta categoria antes de removê-la.",
+        );
+
+      await tx.category.delete({ where: { id } });
+      return { deleted: true };
     });
-    if (videos)
-      throw new BadRequestException(
-        "Mova ou exclua os vídeos desta categoria antes de removê-la.",
-      );
-
-    await this.prisma.category.delete({ where: { id } });
-    return { deleted: true };
   }
 }

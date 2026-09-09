@@ -45,3 +45,9 @@ Os projetos de demonstração ilustram as possibilidades do layout. A seleção 
 Interface construída com **React, TypeScript e Tailwind CSS**, conectada a uma API **NestJS**, com **Prisma e SQLite** para persistência dos projetos. Os vídeos são incorporados pelo YouTube, e a gestão acontece em uma área administrativa com autenticação e controle de sessão.
 
 **FRAME® — Um espaço para apresentar o que você cria e abrir a conversa sobre o que vem a seguir.**
+
+## Resiliência e catálogo paginado
+
+A API de vídeos usa páginas de 24 itens (máximo 100), busca no servidor e detalhes separados. Galeria e painel navegam sem acumular cards. Escritas SQLite passam por fila limitada; saturação retorna 429/503 com `Retry-After`.
+
+Consulte [limites e operação](docs/RESILIENCE.md) para o contrato da API, configuração segura do proxy, logs, compressão, migração do índice único de showreel e limites de SQLite. O [relatório de validação](STRESS_REPORT.md) registra métricas e comandos. `npm run test:stress` usa exclusivamente um banco temporário; `node scripts/prisma-diagnostic.mjs` reproduz o padrão transacional anterior sem alterar o banco do projeto.

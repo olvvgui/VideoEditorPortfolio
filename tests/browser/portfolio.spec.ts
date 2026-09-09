@@ -22,8 +22,17 @@ test("galeria, filtros, busca, modal e layout mobile", async ({ page }) => {
   await expect(page.locator(".animated-logo")).not.toHaveClass(/is-centered/);
   await page.screenshot({ path: "test-results/desktop.png", fullPage: true });
   await page.getByRole("button", { name: "Comercial", exact: true }).click();
-  for (const card of await page.locator(".video-card").all())
-    await expect(card.locator(".category-chip")).toHaveText("Comercial");
+  await expect
+    .poll(async () => {
+      const categories = await page
+        .locator(".video-card .category-chip")
+        .allTextContents();
+      return (
+        categories.length > 0 &&
+        categories.every((category) => category === "Comercial")
+      );
+    })
+    .toBe(true);
   await page
     .getByRole("textbox", { name: "Buscar projeto" })
     .fill("inexistente123456");

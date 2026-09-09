@@ -28,7 +28,7 @@ export class AuthService {
       throw new UnauthorizedException("E-mail ou senha inválidos.");
     const jti = randomBytes(32).toString("hex");
     const token = await this.jwt.signAsync({ sub: admin.id, jti });
-    await this.prisma.$transaction(async (tx) => {
+    await this.prisma.write("session.create", async (tx) => {
       await tx.session.deleteMany({
         where: { expiresAt: { lte: new Date() } },
       });
@@ -71,8 +71,10 @@ export class AuthService {
   async logout(token: unknown) {
     const payload = await this.claims(token);
     if (payload)
-      await this.prisma.session.deleteMany({
-        where: { id: digest(payload.jti), adminId: payload.sub },
-      });
+      await this.prisma.write("session.delete", (tx) =>
+        tx.session.deleteMany({
+          where: { id: digest(payload.jti), adminId: payload.sub },
+        }),
+      );
   }
 }

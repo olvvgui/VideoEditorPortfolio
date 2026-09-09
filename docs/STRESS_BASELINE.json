@@ -1,0 +1,36 @@
+{
+  "date": "2026-09-09T13:15:27.865Z",
+  "node": "v22.22.1",
+  "scope": "Local isolated SQLite; external images/fonts/players blocked in browser; no media upload",
+  "batches": [
+    {
+      "name": "sustained",
+      "count": 80,
+      "concurrency": 5,
+      "statuses": {
+        "201": 80
+      },
+      "durationMs": 429,
+      "p95Ms": 53,
+      "rows": 80,
+      "showreels": 1
+    },
+    {
+      "name": "burst",
+      "count": 300,
+      "concurrency": 30,
+      "statuses": {
+        "201": 22,
+        "429": 262,
+        "500": 16
+      },
+      "durationMs": 6206,
+      "p95Ms": 5067,
+      "rows": 102,
+      "showreels": 1
+    }
+  ],
+  "catalogs": [],
+  "recoveryStatus": 201,
+  "failure": "Chromium ausente: baseline de navegador não executado nesta rodada."
+}

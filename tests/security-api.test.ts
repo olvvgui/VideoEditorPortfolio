@@ -181,6 +181,9 @@ test(
         headers: { "X-Forwarded-For": `192.0.2.${i}` },
       });
       if (response.status === 429) {
+        assert.ok(Number(response.headers.get("retry-after")) >= 1);
+        assert.equal(response.headers.get("x-ratelimit-remaining"), "0");
+        assert.ok(Number(response.headers.get("x-ratelimit-limit")) > 0);
         limited = true;
         break;
       }

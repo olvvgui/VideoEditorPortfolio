@@ -3,7 +3,7 @@ import "dotenv/config";
 import { Module, ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { APP_GUARD } from "@nestjs/core";
-import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
+import { ThrottlerModule } from "@nestjs/throttler";
 import { NestExpressApplication } from "@nestjs/platform-express";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
@@ -18,6 +18,8 @@ import { digest } from "./auth/session";
 import { securityConfig } from "./security/config";
 import { requestPolicy, parserErrors } from "./security/http";
 import { SafeExceptionsFilter } from "./security/exceptions.filter";
+import { publicJsonCompression } from "./security/compression";
+import { RateGuard } from "./security/rate.guard";
 @Module({
   imports: [
     PrismaModule,
@@ -27,6 +29,16 @@ import { SafeExceptionsFilter } from "./security/exceptions.filter";
     ThrottlerModule.forRoot([
       { name: "default", ttl: 60000, limit: 120 },
       {
+        name: "write",
+        ttl: 60000,
+        limit: 100,
+        skipIf: (context) =>
+          ["GET", "HEAD", "OPTIONS"].includes(
+            context.switchToHttp().getRequest().method,
+          ),
+        generateKey: (_context, tracker) => digest(`write:${tracker}`),
+      },
+      {
         name: "aggregate",
         ttl: 60000,
         limit: 120,
@@ -35,7 +47,7 @@ import { SafeExceptionsFilter } from "./security/exceptions.filter";
     ]),
   ],
   providers: [
-    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_GUARD, useClass: RateGuard },
     { provide: APP_GUARD, useExisting: AuthGuard },
   ],
 })
@@ -47,6 +59,16 @@ async function bootstrap() {
     bodyParser: false,
   });
   app.set("trust proxy", config.proxies.length ? config.proxies : false);
+  app.use(
+    (
+      _req: express.Request,
+      res: express.Response,
+      next: express.NextFunction,
+    ) => {
+      res.locals.startedAt = performance.now();
+      next();
+    },
+  );
   app.use(
     helmet({
       contentSecurityPolicy: {
@@ -84,6 +106,7 @@ async function bootstrap() {
   app.use(express.json({ limit: "32kb", strict: true, inflate: false }));
   app.use(parserErrors);
   app.use(cookieParser());
+  app.use(publicJsonCompression);
   app.setGlobalPrefix("api");
   app.useGlobalPipes(
     new ValidationPipe({

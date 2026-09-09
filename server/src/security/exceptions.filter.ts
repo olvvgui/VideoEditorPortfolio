@@ -6,14 +6,18 @@ import {
   Logger,
 } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
-import type { Response } from "express";
+import type { Request, Response } from "express";
 import { randomUUID } from "node:crypto";
 
+import { databaseFailure, operationErrors } from "./database-errors";
+import { STATUS_CODES } from "node:http";
 @Catch()
 export class SafeExceptionsFilter implements ExceptionFilter {
   private readonly logger = new Logger("SecurityErrors");
   catch(error: unknown, host: ArgumentsHost) {
     const response = host.switchToHttp().getResponse<Response>();
+    const request = host.switchToHttp().getRequest<Request>();
+    const failure = databaseFailure(error);
     let status = 500;
     let message: string | string[] = "Não foi possível concluir a solicitação.";
     if (error instanceof HttpException) {
@@ -45,18 +49,41 @@ export class SafeExceptionsFilter implements ExceptionFilter {
         message = "O registro ainda está associado a outros dados.";
       }
     }
+    if (failure.transient) {
+      status = 503;
+      message = "O serviço está temporariamente ocupado. Tente novamente.";
+      response.setHeader("Retry-After", "1");
+    }
     const requestId = randomUUID();
-    if (status >= 500)
-      this.logger.error({
-        requestId,
-        kind: error instanceof Error ? error.name : "UnknownError",
-      });
-    response
-      .status(status)
-      .json({
-        statusCode: status,
-        message,
-        ...(status >= 500 ? { requestId } : {}),
-      });
+    if (status >= 500 || failure.code) {
+      const operation =
+        error && typeof error === "object"
+          ? operationErrors.get(error)
+          : undefined;
+      this.logger.error(
+        JSON.stringify({
+          requestId,
+          kind: failure.code ? "PrismaClientKnownRequestError" : "RequestError",
+          prismaCode: failure.code,
+          operation: operation?.operation ?? "request",
+          durationMs:
+            operation?.durationMs ??
+            Math.round(
+              performance.now() -
+                (response.locals.startedAt ?? performance.now()),
+            ),
+          reason: failure.reason,
+          transient: failure.transient,
+          endpoint: `${request.method} ${request.route?.path ?? "unmatched"}`,
+          status,
+        }),
+      );
+    }
+    response.status(status).json({
+      statusCode: status,
+      error: STATUS_CODES[status] ?? "Error",
+      message,
+      ...(status >= 500 ? { requestId } : {}),
+    });
   }
 }

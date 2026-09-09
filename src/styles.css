@@ -2463,3 +2463,5 @@ form select option {
     border-radius: 24px;
   }
 }
+
+.catalog-pagination { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 24px 0; flex-wrap: wrap; }

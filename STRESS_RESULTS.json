@@ -1,0 +1,423 @@
+{
+  "date": "2026-09-09T13:44:55.426Z",
+  "node": "v22.22.1",
+  "scope": "Local isolated SQLite; external images/fonts/players blocked in browser; no media upload",
+  "batches": [
+    {
+      "name": "sustained",
+      "count": 80,
+      "concurrency": 5,
+      "statuses": {
+        "201": 80
+      },
+      "durationMs": 342,
+      "p95Ms": 29,
+      "rows": 80,
+      "before": 0,
+      "showreels": 1
+    },
+    {
+      "name": "burst",
+      "count": 300,
+      "concurrency": 30,
+      "statuses": {
+        "201": 19,
+        "429": 281
+      },
+      "durationMs": 431,
+      "p95Ms": 120,
+      "rows": 99,
+      "before": 80,
+      "showreels": 1
+    },
+    {
+      "name": "external-lock",
+      "count": 30,
+      "concurrency": 30,
+      "statuses": {
+        "503": 30
+      },
+      "durationMs": 5035,
+      "p95Ms": 1029,
+      "rows": 100,
+      "before": 100,
+      "showreels": 1
+    }
+  ],
+  "catalogs": [
+    {
+      "total": 1000,
+      "apiStatus": 200,
+      "apiMs": 14,
+      "payloadBytes": 7811,
+      "compressedBytes": 588,
+      "encoding": "gzip",
+      "galleryMs": 453,
+      "domNodes": 623,
+      "cards": 24,
+      "searchMs": 347,
+      "modal": true,
+      "mobileOverflow": false,
+      "adminMs": 646,
+      "adminCards": 24,
+      "errors": []
+    },
+    {
+      "total": 5000,
+      "apiStatus": 200,
+      "apiMs": 8,
+      "payloadBytes": 7835,
+      "compressedBytes": 596,
+      "encoding": "gzip",
+      "galleryMs": 426,
+      "domNodes": 623,
+      "cards": 24,
+      "searchMs": 324,
+      "modal": true,
+      "mobileOverflow": false,
+      "adminMs": 637,
+      "adminCards": 24,
+      "errors": []
+    }
+  ],
+  "checks": {
+    "categoryCapAndConcurrentUniqueness": true,
+    "validationAuthorization": {
+      "200": 12,
+      "201": 1,
+      "400": 17,
+      "401": 7,
+      "403": 1,
+      "404": 1,
+      "413": 1
+    },
+    "concurrentSelections": 12,
+    "uniqueConstraint": true,
+    "rollback": true,
+    "externalLockRecovery": true,
+    "pagination": {
+      "pages": 50,
+      "unique": 5000,
+      "deterministic": true
+    }
+  },
+  "databaseEvents": [
+    {
+      "requestId": "8e179482-bfdc-4642-b40a-7f16ec6b6ec5",
+      "kind": "PrismaClientKnownRequestError",
+      "prismaCode": "P2025",
+      "operation": "video.update",
+      "durationMs": 8,
+      "reason": "database_error",
+      "transient": false,
+      "endpoint": "PUT /api/videos/:id",
+      "status": 404
+    },
+    {
+      "requestId": "2b973d1a-baf7-4c4a-ab32-c699c75972f1",
+      "kind": "RequestError",
+      "operation": "video.create",
+      "durationMs": 0,
+      "reason": "queue_full",
+      "transient": true,
+      "endpoint": "POST /api/videos",
+      "status": 503
+    },
+    {
+      "requestId": "b44af67a-7c7a-4a8e-b1ae-e0f604f8cd42",
+      "kind": "RequestError",
+      "operation": "video.create",
+      "durationMs": 0,
+      "reason": "queue_full",
+      "transient": true,
+      "endpoint": "POST /api/videos",
+      "status": 503
+    },
+    {
+      "requestId": "df6ab075-d4a4-433d-94dc-795671d43473",
+      "kind": "RequestError",
+      "operation": "video.create",
+      "durationMs": 0,
+      "reason": "queue_full",
+      "transient": true,
+      "endpoint": "POST /api/videos",
+      "status": 503
+    },
+    {
+      "requestId": "0abcccbb-fa93-44eb-b9a9-5d1c612c6856",
+      "kind": "RequestError",
+      "operation": "video.create",
+      "durationMs": 0,
+      "reason": "queue_full",
+      "transient": true,
+      "endpoint": "POST /api/videos",
+      "status": 503
+    },
+    {
+      "requestId": "08fde0c8-95d6-4999-a2d9-d74831f557b0",
+      "kind": "RequestError",
+      "operation": "video.create",
+      "durationMs": 0,
+      "reason": "queue_full",
+      "transient": true,
+      "endpoint": "POST /api/videos",
+      "status": 503
+    },
+    {
+      "requestId": "c3991aeb-5036-4eaf-b837-9ac75b788203",
+      "kind": "RequestError",
+      "operation": "video.create",
+      "durationMs": 0,
+      "reason": "queue_full",
+      "transient": true,
+      "endpoint": "POST /api/videos",
+      "status": 503
+    },
+    {
+      "requestId": "fa29037b-d246-4f5c-bbbe-7d422166c740",
+      "kind": "RequestError",
+      "operation": "video.create",
+      "durationMs": 0,
+      "reason": "queue_full",
+      "transient": true,
+      "endpoint": "POST /api/videos",
+      "status": 503
+    },
+    {
+      "requestId": "159122aa-c1d8-4974-ad7d-9fa9deebe74e",
+      "kind": "RequestError",
+      "operation": "video.create",
+      "durationMs": 0,
+      "reason": "queue_full",
+      "transient": true,
+      "endpoint": "POST /api/videos",
+      "status": 503
+    },
+    {
+      "requestId": "4d05f37d-14c7-4a91-94a3-09aca0306a1a",
+      "kind": "RequestError",
+      "operation": "video.create",
+      "durationMs": 0,
+      "reason": "queue_full",
+      "transient": true,
+      "endpoint": "POST /api/videos",
+      "status": 503
+    },
+    {
+      "requestId": "106271e4-f0c6-441e-b4b9-f190946240d2",
+      "kind": "RequestError",
+      "operation": "video.create",
+      "durationMs": 0,
+      "reason": "queue_full",
+      "transient": true,
+      "endpoint": "POST /api/videos",
+      "status": 503
+    },
+    {
+      "requestId": "bf857a4f-17b6-47a5-8494-97ee978423a1",
+      "kind": "RequestError",
+      "operation": "video.create",
+      "durationMs": 0,
+      "reason": "queue_full",
+      "transient": true,
+      "endpoint": "POST /api/videos",
+      "status": 503
+    },
+    {
+      "requestId": "5e600ca9-9e8b-418b-8186-0ffe6322d9b0",
+      "kind": "RequestError",
+      "operation": "video.create",
+      "durationMs": 0,
+      "reason": "queue_full",
+      "transient": true,
+      "endpoint": "POST /api/videos",
+      "status": 503
+    },
+    {
+      "requestId": "a4835a2e-22e0-4947-80b6-bd5359469f6e",
+      "kind": "RequestError",
+      "operation": "video.create",
+      "durationMs": 0,
+      "reason": "queue_full",
+      "transient": true,
+      "endpoint": "POST /api/videos",
+      "status": 503
+    },
+    {
+      "requestId": "27b1b61f-4089-4726-9e9a-e7e7967f9d99",
+      "kind": "RequestError",
+      "operation": "video.create",
+      "durationMs": 1002,
+      "reason": "queue_timeout",
+      "transient": true,
+      "endpoint": "POST /api/videos",
+      "status": 503
+    },
+    {
+      "requestId": "a297112c-ba50-4839-9c88-213149c39f77",
+      "kind": "RequestError",
+      "operation": "video.create",
+      "durationMs": 1003,
+      "reason": "queue_timeout",
+      "transient": true,
+      "endpoint": "POST /api/videos",
+      "status": 503
+    },
+    {
+      "requestId": "e91c2b10-097f-43a8-bde6-1da5700175d3",
+      "kind": "RequestError",
+      "operation": "video.create",
+      "durationMs": 1003,
+      "reason": "queue_timeout",
+      "transient": true,
+      "endpoint": "POST /api/videos",
+      "status": 503
+    },
+    {
+      "requestId": "f3f74cbe-ffed-446c-a6c2-b687a9532703",
+      "kind": "RequestError",
+      "operation": "video.create",
+      "durationMs": 1003,
+      "reason": "queue_timeout",
+      "transient": true,
+      "endpoint": "POST /api/videos",
+      "status": 503
+    },
+    {
+      "requestId": "5001046d-67e6-43b2-8e6d-bd2ca4d2b75f",
+      "kind": "RequestError",
+      "operation": "video.create",
+      "durationMs": 1003,
+      "reason": "queue_timeout",
+      "transient": true,
+      "endpoint": "POST /api/videos",
+      "status": 503
+    },
+    {
+      "requestId": "886a2453-4b71-4df8-8e8f-5ccdf9a851dc",
+      "kind": "RequestError",
+      "operation": "video.create",
+      "durationMs": 1003,
+      "reason": "queue_timeout",
+      "transient": true,
+      "endpoint": "POST /api/videos",
+      "status": 503
+    },
+    {
+      "requestId": "d8de8da1-cc51-4f8e-95b8-57baf7720dfb",
+      "kind": "RequestError",
+      "operation": "video.create",
+      "durationMs": 1003,
+      "reason": "queue_timeout",
+      "transient": true,
+      "endpoint": "POST /api/videos",
+      "status": 503
+    },
+    {
+      "requestId": "69fed7c5-38c6-444b-812a-6ee682b6b206",
+      "kind": "RequestError",
+      "operation": "video.create",
+      "durationMs": 1003,
+      "reason": "queue_timeout",
+      "transient": true,
+      "endpoint": "POST /api/videos",
+      "status": 503
+    },
+    {
+      "requestId": "eb74fb85-b600-420a-accc-27f176c5384c",
+      "kind": "RequestError",
+      "operation": "video.create",
+      "durationMs": 1003,
+      "reason": "queue_timeout",
+      "transient": true,
+      "endpoint": "POST /api/videos",
+      "status": 503
+    },
+    {
+      "requestId": "adfe70f0-d213-4ebe-8a9a-a443460c4a37",
+      "kind": "RequestError",
+      "operation": "video.create",
+      "durationMs": 1003,
+      "reason": "queue_timeout",
+      "transient": true,
+      "endpoint": "POST /api/videos",
+      "status": 503
+    },
+    {
+      "requestId": "10ef5dbe-e7c9-40cc-ae74-52356a62c0e0",
+      "kind": "RequestError",
+      "operation": "video.create",
+      "durationMs": 1003,
+      "reason": "queue_timeout",
+      "transient": true,
+      "endpoint": "POST /api/videos",
+      "status": 503
+    },
+    {
+      "requestId": "5ee9b957-0c8e-4353-a2db-0ffe66772071",
+      "kind": "RequestError",
+      "operation": "video.create",
+      "durationMs": 1003,
+      "reason": "queue_timeout",
+      "transient": true,
+      "endpoint": "POST /api/videos",
+      "status": 503
+    },
+    {
+      "requestId": "1b59010e-a9a7-491f-b23a-55df76a682e9",
+      "kind": "RequestError",
+      "operation": "video.create",
+      "durationMs": 1001,
+      "reason": "queue_timeout",
+      "transient": true,
+      "endpoint": "POST /api/videos",
+      "status": 503
+    },
+    {
+      "requestId": "1b436a70-e0fc-4823-9326-ed08ea0d8db1",
+      "kind": "RequestError",
+      "operation": "video.create",
+      "durationMs": 1002,
+      "reason": "queue_timeout",
+      "transient": true,
+      "endpoint": "POST /api/videos",
+      "status": 503
+    },
+    {
+      "requestId": "930f0ffb-ceb6-4933-9993-b0b23bfcdf54",
+      "kind": "RequestError",
+      "operation": "video.create",
+      "durationMs": 1000,
+      "reason": "queue_timeout",
+      "transient": true,
+      "endpoint": "POST /api/videos",
+      "status": 503
+    },
+    {
+      "requestId": "45bd87e3-115c-4c99-bec8-132de591fd67",
+      "kind": "RequestError",
+      "operation": "video.create",
+      "durationMs": 1001,
+      "reason": "queue_timeout",
+      "transient": true,
+      "endpoint": "POST /api/videos",
+      "status": 503
+    },
+    {
+      "requestId": "5a55cd02-9eb0-4c4c-b7cc-3ea464f08ffa",
+      "kind": "PrismaClientKnownRequestError",
+      "prismaCode": "P1008",
+      "operation": "video.create",
+      "durationMs": 5012,
+      "reason": "database_timeout",
+      "transient": true,
+      "endpoint": "POST /api/videos",
+      "status": 503
+    }
+  ],
+  "recoveryStatus": 201,
+  "recoveryRows": 100,
+  "alive": 200,
+  "mode": "full",
+  "passed": true
+}

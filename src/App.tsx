@@ -21,7 +21,13 @@ import {
   AudioLines,
   Plus,
 } from "lucide-react";
-import { api, type Category, type Video } from "./api";
+import {
+  api,
+  type Category,
+  type Video,
+  type VideoListItem,
+  type VideoPage,
+} from "./api";
 import { demoVideos } from "../shared/demo";
 import { categories as defaultCategories } from "../shared/youtube";
 import { VideoModal } from "./components/VideoModal";
@@ -94,7 +100,7 @@ function AnimatedLogo() {
   );
 }
 function App() {
-  const [videos, setVideos] = useState<Video[]>([]),
+  const [videos, setVideos] = useState<VideoListItem[]>([]),
     [loading, setLoading] = useState(true),
     [error, setError] = useState("");
   const [filter, setFilter] = useState("Todos"),
@@ -105,49 +111,78 @@ function App() {
     [selected, setSelected] = useState<Video | null>(null),
     [menu, setMenu] = useState(false);
   const [service, setService] = useState<number | null>(null);
-  const loadingRequest = useRef(false);
-  const load = useCallback((silent = false) => {
-    if (isDemo) {
-      setVideos(
-        demoCatalog.map((video) => ({
-          ...video,
-          videoId: extractYouTubeId(video.youtubeUrl)!,
-        })),
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [hasNext, setHasNext] = useState(false);
+  const [featuredVideo, setFeaturedVideo] = useState<Video | null>(null);
+  const loadingRequest = useRef(0);
+  async function openVideo(video: VideoListItem) {
+    try {
+      setSelected(
+        isDemo ? (video as Video) : await api<Video>(`/videos/${video.id}`),
       );
-      setCategoryOptions([
-        ...new Set(demoCatalog.map((video) => video.category)),
-      ]);
-      setLoading(false);
-      return;
+    } catch {
+      setError("Não foi possível abrir o projeto. Tente novamente.");
     }
-    if (loadingRequest.current) return;
-    loadingRequest.current = true;
-    if (!silent) setLoading(true);
-    Promise.all([api<Video[]>("/videos"), api<Category[]>("/categories")])
-      .then(([loadedVideos, loadedCategories]) => {
-        setVideos(loadedVideos);
-        setCategoryOptions(loadedCategories.map(({ name }) => name));
-        setFilter((current) =>
-          current === "Todos" ||
-          loadedCategories.some(({ name }) => name === current)
-            ? current
-            : "Todos",
+  }
+  const load = useCallback(
+    (silent = false) => {
+      if (isDemo) {
+        setVideos(
+          demoCatalog.map((video) => ({
+            ...video,
+            videoId: extractYouTubeId(video.youtubeUrl)!,
+          })),
         );
-        setError("");
-      })
-      .catch(() => {
-        if (!silent)
-          setError("Não foi possível carregar os projetos. Tente novamente.");
-      })
-      .finally(() => {
-        loadingRequest.current = false;
+        setCategoryOptions([
+          ...new Set(demoCatalog.map((video) => video.category)),
+        ]);
         setLoading(false);
+        return;
+      }
+      const requestId = ++loadingRequest.current;
+      if (!silent) setLoading(true);
+      const query = new URLSearchParams({
+        page: String(page),
+        limit: "24",
+        search,
+        ...(filter === "Todos" ? {} : { category: filter }),
       });
-  }, []);
+      Promise.all([
+        api<VideoPage>(`/videos?${query}`),
+        api<Category[]>("/categories"),
+        api<Video | null>("/videos/featured"),
+      ])
+        .then(([loadedVideos, loadedCategories, featured]) => {
+          if (requestId !== loadingRequest.current) return;
+          setVideos(loadedVideos.items);
+          setTotal(loadedVideos.total);
+          setHasNext(loadedVideos.hasNext);
+          setFeaturedVideo(featured);
+          setCategoryOptions(loadedCategories.map(({ name }) => name));
+          setFilter((current) =>
+            current === "Todos" ||
+            loadedCategories.some(({ name }) => name === current)
+              ? current
+              : "Todos",
+          );
+          setError("");
+        })
+        .catch(() => {
+          if (requestId !== loadingRequest.current) return;
+          if (!silent)
+            setError("Não foi possível carregar os projetos. Tente novamente.");
+        })
+        .finally(() => {
+          if (requestId === loadingRequest.current) setLoading(false);
+        });
+    },
+    [page, search, filter],
+  );
   useEffect(() => {
     if (!isDemo && window.location.pathname.startsWith("/admin")) return;
-    load();
-    if (isDemo) return;
+    const debounce = window.setTimeout(() => load(), 250);
+    if (isDemo) return () => window.clearTimeout(debounce);
     const refresh = () => {
       if (document.visibilityState === "visible") load(true);
     };
@@ -160,6 +195,8 @@ function App() {
     document.addEventListener("visibilitychange", refresh);
     const interval = window.setInterval(refresh, 30000);
     return () => {
+      window.clearTimeout(debounce);
+      loadingRequest.current++;
       channel?.close();
       window.removeEventListener("focus", refresh);
       document.removeEventListener("visibilitychange", refresh);
@@ -172,14 +209,18 @@ function App() {
         <Admin />
       </Suspense>
     );
-  const filtered = videos.filter(
-    (v) =>
-      (filter === "Todos" || v.category === filter) &&
-      `${v.title} ${v.category} ${v.description}`
-        .toLocaleLowerCase("pt-BR")
-        .includes(search.toLocaleLowerCase("pt-BR")),
-  );
-  const featured = videos.find(({ isShowreel }) => isShowreel) ?? videos[0];
+  const filtered = isDemo
+    ? videos.filter(
+        (v) =>
+          (filter === "Todos" || v.category === filter) &&
+          `${v.title} ${v.category} ${v.description}`
+            .toLocaleLowerCase("pt-BR")
+            .includes(search.toLocaleLowerCase("pt-BR")),
+      )
+    : videos;
+  const featured = isDemo
+    ? (videos.find(({ isShowreel }) => isShowreel) ?? videos[0])
+    : featuredVideo;
   const services = [
     {
       icon: Film,
@@ -275,7 +316,7 @@ function App() {
               <button
                 className="showreel"
                 disabled={!featured}
-                onClick={() => featured && setSelected(featured)}
+                onClick={() => featured && void openVideo(featured)}
               >
                 <span className="play-outline">
                   <Play size={12} fill="currentColor" />
@@ -297,7 +338,7 @@ function App() {
               className="hero-film"
               aria-label="Assistir ao projeto em destaque"
               disabled={!featured}
-              onClick={() => featured && setSelected(featured)}
+              onClick={() => featured && void openVideo(featured)}
             >
               <img
                 src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1500&q=90"
@@ -371,11 +412,16 @@ function App() {
                   key={c}
                   className={filter === c ? "selected" : ""}
                   aria-pressed={filter === c}
-                  onClick={() => setFilter(c)}
+                  onClick={() => {
+                    setPage(1);
+                    setFilter(c);
+                  }}
                 >
                   {c}
                   {c === "Todos" && (
-                    <span>{String(videos.length).padStart(2, "0")}</span>
+                    <span>
+                      {String(isDemo ? videos.length : total).padStart(2, "0")}
+                    </span>
                   )}
                 </button>
               ))}
@@ -384,12 +430,22 @@ function App() {
               <Search size={16} />
               <input
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                maxLength={100}
+                onChange={(e) => {
+                  setPage(1);
+                  setSearch(e.target.value);
+                }}
                 placeholder="Buscar projeto"
                 aria-label="Buscar projeto"
               />
               {search && (
-                <button aria-label="Limpar busca" onClick={() => setSearch("")}>
+                <button
+                  aria-label="Limpar busca"
+                  onClick={() => {
+                    setPage(1);
+                    setSearch("");
+                  }}
+                >
                   <X size={14} />
                 </button>
               )}
@@ -412,19 +468,20 @@ function App() {
             <div className="empty-state">
               <Film />
               <h3>
-                {videos.length
+                {videos.length || search || filter !== "Todos"
                   ? "Nenhum projeto encontrado"
                   : "Novas histórias estão chegando."}
               </h3>
               <p>
-                {videos.length
+                {videos.length || search || filter !== "Todos"
                   ? "Experimente outra busca ou categoria."
                   : "Em breve, novos projetos por aqui."}
               </p>
-              {videos.length > 0 && (
+              {(videos.length > 0 || search || filter !== "Todos") && (
                 <button
                   className="button button-outline"
                   onClick={() => {
+                    setPage(1);
                     setSearch("");
                     setFilter("Todos");
                   }}
@@ -441,7 +498,7 @@ function App() {
                   <button
                     className="video-card"
                     key={v.id}
-                    onClick={() => setSelected(v)}
+                    onClick={() => void openVideo(v)}
                   >
                     <div className="thumbnail">
                       <img
@@ -489,6 +546,28 @@ function App() {
                 );
               })}
             </div>
+          )}
+          {!isDemo && (
+            <nav
+              className="catalog-pagination"
+              aria-label="Páginas de projetos"
+            >
+              <button
+                className="button button-outline"
+                disabled={page === 1 || loading}
+                onClick={() => setPage(page - 1)}
+              >
+                Anterior
+              </button>
+              <span>Página {page}</span>
+              <button
+                className="button button-outline"
+                disabled={!hasNext || loading}
+                onClick={() => setPage(page + 1)}
+              >
+                Próxima
+              </button>
+            </nav>
           )}
           <div className="portfolio-bottom">
             <span>Histórias diferentes. A mesma atenção a cada detalhe.</span>

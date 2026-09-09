@@ -19,6 +19,7 @@
     "postinstall": "npm run db:generate",
     "test:e2e": "playwright test",
     "test:security": "npm run build && node scripts/security-check.mjs",
+    "test:stress": "npm run build && node scripts/stress-check.mjs",
     "format": "prettier --write src shared server/src server/prisma/seed.ts tests *.json *.ts index.html README.md"
   },
   "dependencies": {

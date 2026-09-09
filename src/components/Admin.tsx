@@ -12,8 +12,16 @@ import {
   Check,
   LoaderCircle,
   Star,
+  Search,
 } from "lucide-react";
-import { api, ApiError, type Category, type Video } from "../api";
+import {
+  api,
+  ApiError,
+  type Category,
+  type Video,
+  type VideoListItem,
+  type VideoPage,
+} from "../api";
 import {
   categories as defaultCategories,
   extractYouTubeId,
@@ -27,7 +35,7 @@ const blank = {
 };
 export function Admin() {
   const [authenticated, setAuthenticated] = useState<boolean | null>(null),
-    [videos, setVideos] = useState<Video[]>([]),
+    [videos, setVideos] = useState<VideoListItem[]>([]),
     [categoryOptions, setCategoryOptions] = useState<Category[]>(
       defaultCategories.map((name, index) => ({
         id: `fallback-${index}`,
@@ -44,9 +52,14 @@ export function Admin() {
     [editing, setEditing] = useState<Video | null>(null),
     [form, setForm] = useState(blank),
     [showForm, setShowForm] = useState(false),
-    [deleting, setDeleting] = useState<Video | null>(null),
+    [deleting, setDeleting] = useState<VideoListItem | null>(null),
     [loading, setLoading] = useState(false),
     [newCategory, setNewCategory] = useState("");
+  const [page, setPage] = useState(1),
+    [search, setSearch] = useState("");
+  const [total, setTotal] = useState(0),
+    [hasNext, setHasNext] = useState(false);
+  const refreshRequest = useRef(0);
   const deleteDialog = useRef<HTMLDialogElement>(null);
   function handleError(e: unknown) {
     if (e instanceof ApiError && e.status === 401) setAuthenticated(false);
@@ -55,31 +68,48 @@ export function Admin() {
     );
   }
   async function refresh() {
+    const requestId = ++refreshRequest.current;
     setLoading(true);
     try {
       const [loadedVideos, loadedCategories] = await Promise.all([
-        api<Video[]>("/videos"),
+        api<VideoPage>(
+          `/videos?${new URLSearchParams({ page: String(page), limit: "24", search })}`,
+        ),
         api<Category[]>("/categories"),
       ]);
-      setVideos(loadedVideos);
+      if (requestId !== refreshRequest.current) return;
+      if (!loadedVideos.items.length && page > 1) {
+        setPage(page - 1);
+        return;
+      }
+      setVideos(loadedVideos.items);
+      setTotal(loadedVideos.total);
+      setHasNext(loadedVideos.hasNext);
       setCategoryOptions(loadedCategories);
     } catch (e) {
-      handleError(e);
+      if (requestId === refreshRequest.current) handleError(e);
     } finally {
-      setLoading(false);
+      if (requestId === refreshRequest.current) setLoading(false);
     }
   }
   useEffect(() => {
     api("/auth/me")
       .then(() => {
         setAuthenticated(true);
-        void refresh();
       })
       .catch((e) => {
         setAuthenticated(false);
         if (!(e instanceof ApiError && e.status === 401)) handleError(e);
       });
   }, []);
+  useEffect(() => {
+    if (!authenticated) return;
+    const timer = window.setTimeout(() => void refresh(), 250);
+    return () => {
+      window.clearTimeout(timer);
+      refreshRequest.current++;
+    };
+  }, [authenticated, page, search]);
   useEffect(() => {
     if (deleting) deleteDialog.current?.showModal();
   }, [deleting]);
@@ -116,7 +146,14 @@ export function Admin() {
       setBusy(false);
     }
   }
-  function openForm(v?: Video) {
+  async function openForm(item?: VideoListItem) {
+    let v: Video | undefined;
+    try {
+      if (item) v = await api<Video>(`/videos/${item.id}`);
+    } catch (error) {
+      handleError(error);
+      return;
+    }
     setError("");
     setNotice("");
     setEditing(v || null);
@@ -174,11 +211,12 @@ export function Admin() {
       setBusy(false);
     }
   }
-  async function chooseShowreel(video: Video) {
+  async function chooseShowreel(item: VideoListItem) {
     setBusy(true);
     setError("");
     setNotice("");
     try {
+      const video = await api<Video>(`/videos/${item.id}`);
       await api(`/videos/${video.id}`, {
         method: "PUT",
         body: JSON.stringify({
@@ -376,9 +414,22 @@ export function Admin() {
                 ))}
               </div>
             </section>
+            <label className="search">
+              <Search size={16} />
+              <input
+                aria-label="Buscar no painel"
+                maxLength={100}
+                placeholder="Buscar no painel"
+                value={search}
+                onChange={(e) => {
+                  setPage(1);
+                  setSearch(e.target.value);
+                }}
+              />
+            </label>
             <div className="admin-toolbar">
               <span>
-                <Film size={19} /> {videos.length} projetos publicados
+                <Film size={19} /> {total} projetos publicados
               </span>
               <button
                 className="button button-green"
@@ -593,6 +644,23 @@ export function Admin() {
                 )}
               </div>
             )}
+            <nav className="catalog-pagination" aria-label="Páginas do painel">
+              <button
+                className="button button-outline"
+                disabled={page === 1 || loading || busy}
+                onClick={() => setPage(page - 1)}
+              >
+                Anterior
+              </button>
+              <span>Página {page}</span>
+              <button
+                className="button button-outline"
+                disabled={!hasNext || loading || busy}
+                onClick={() => setPage(page + 1)}
+              >
+                Próxima
+              </button>
+            </nav>
           </>
         )}
         {deleting && (

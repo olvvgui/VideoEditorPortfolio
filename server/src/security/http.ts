@@ -1,3 +1,4 @@
+import { STATUS_CODES } from "node:http";
 import type { RequestHandler, ErrorRequestHandler } from "express";
 
 /** All unsafe requests, including /API, are checked before body parsing and routing. */
@@ -13,6 +14,7 @@ export const requestPolicy =
     ) {
       res.status(403).json({
         statusCode: 403,
+        error: "Forbidden",
         message: "Origem da solicitação não permitida.",
       });
       return;
@@ -23,6 +25,7 @@ export const requestPolicy =
     ) {
       res.status(415).json({
         statusCode: 415,
+        error: "Unsupported Media Type",
         message: "Envie o conteúdo como application/json.",
       });
       return;
@@ -50,6 +53,7 @@ export const parserErrors: ErrorRequestHandler = (
     const statusCode = statuses[type];
     res.status(statusCode).json({
       statusCode,
+      error: STATUS_CODES[statusCode],
       message: "Corpo da solicitação inválido ou acima do limite permitido.",
     });
   } else next(error);
